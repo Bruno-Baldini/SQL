@@ -1,0 +1,3 @@
+http://groups.di.unipi.it/~leoni/BDeSI/E2.Esercizi%20di%20SQL.pdf
+https://learnsql.it/blog/10-esercizi-sulle-subquery-correlate-con-soluzioni/
+https://dbdmg.polito.it/wordpress/wp-content/uploads/2010/12/Unita3_Lezione3_EserciziRiepilogo.pdf
