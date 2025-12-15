@@ -97,7 +97,6 @@ GROUP BY
 
 )
 
-
 SELECT
   skills,
   number_skill,
@@ -107,4 +106,108 @@ INNER JOIN skills_dim ON skills_dim.skill_id = skills_count.skill_id
 ORDER BY 
   number_skill DESC
 LIMIT 10
+;
+
+/*
+4) What are the top skills based on salary for my role?
+*/
+
+SELECT
+ skills_dim.skills,
+ ROUND (AVG(job_postings_fact.salary_year_avg),0) AS avg_salary
+FROM
+ job_postings_fact
+INNER JOIN 
+ skills_job_dim ON skills_job_dim.job_id = job_postings_fact.job_id
+INNER JOIN 
+ skills_dim ON skills_dim.skill_id = skills_job_dim.skill_id
+WHERE 
+ job_title_short = 'Data Analyst'
+ AND
+ salary_year_avg IS NOT NULL
+GROUP BY  
+ skills_dim.skills
+ORDER BY 
+ avg_salary DESC
+LIMIT 20
+;
+
+/*
+5) What are the most optimal skills to learn?
+*/
+
+WITH demnanded_skills AS (
+SELECT 
+  skills_dim.skill_id,
+  skills_dim.skills,
+  COUNT (skill_id) AS demand_skills
+FROM 
+  job_postings_fact
+INNER JOIN 
+ skills_job_dim ON job_postings_fact.job_id = skills_job_dim.job_id
+INNER JOIN 
+ skills_dim ON skills_job_dim.skill_id = skills_dim.skill_id
+WHERE 
+  job_postings_fact.job_title_short = 'Data Analyst'
+  AND
+  salary_year_avg IS NOT NULL
+GROUP BY 
+  skill_id
+), skills_for_salary AS (
+ SELECT
+ skills_job_dim.skill_id,
+ skills_dim.skills,
+ ROUND (AVG(job_postings_fact.salary_year_avg),0) AS avg_salary
+FROM
+ job_postings_fact
+INNER JOIN 
+ skills_job_dim ON skills_job_dim.job_id = job_postings_fact.job_id
+INNER JOIN 
+ skills_dim ON skills_dim.skill_id = skills_job_dim.skill_id
+WHERE 
+ job_title_short = 'Data Analyst'
+ AND
+ salary_year_avg IS NOT NULL
+GROUP BY  
+ skill_id
+)
+
+SELECT
+ demnanded_skills.skill_id,
+ demnanded_skills.skillS,
+ demand_skills,
+ avg_salary
+FROM
+ demnanded_skills
+INNER JOIN 
+ skills_for_salary ON demnanded_skills.skill_id = skills_for_salary.skill_id
+WHERE 
+ demand_skills > 30
+ORDER BY
+ avg_salary DESC 
+LIMIT 30
+;
+
+-- OR
+
+SELECT
+ skills_job_dim.skill_id,
+ skills_dim.skills,
+ ROUND (AVG(job_postings_fact.salary_year_avg),0) AS avg_salary,
+ COUNT (skill_id) AS demand_skills
+FROM
+ job_postings_fact
+INNER JOIN skills_job_dim ON job_postings_fact.job_id = skills_job_dim.job_id
+INNER JOIN skills_dim ON skills_job_dim.skill_id = skills_dim.skill_id
+WHERE
+ job_title_short = 'Data Analyst'
+ AND
+ salary_year_avg IS NOT NULL
+ AND 
+ demand_skills > 30
+GROUP BY
+ skills_job_dim.skill_id
+ORDER BY
+ avg_salary DESC
+LIMIT 30
 ;
