@@ -8,20 +8,53 @@ http://spdp.di.unimi.it/papers/EserciziarioBD.pdf
 2.2.2 Le Feste
 Sia dato lo schema relazionale:
 FESTA(Codice, Costo, NomeRistorante)
-REGALO(NomeInvitato, CodiceFesta, Regalo)
+REGALO(nome_invitato, CodiceFesta, Regalo)
 INVITATO(Nome, Indirizzo, Telefono)
 
 Interrogazione 1
-Determinare, per ogni festa, il nome dell’invitato pi`u generoso, ovvero
+Determinare, per ogni festa, il nome dell’invitato più generoso, ovvero
 dell’invitato che ha portato il maggior numero di regali.
+
+SELECT nome_invitato,
+       CodiceFesta, 
+       COUNT(Regalo) AS numero_regali
+FROM REGALO AS REG_2
+GROUP BY nome_invitato
+HAVING numero_regali >= ALL (
+  SELECT COUNT(*)
+  FROM REGALO AS REG_2
+  WHERE REG_2.CodiceFesta = REG_1.CodiceFesta
+  GROUP BY REG_2.nome_invitato
+)
+
 Interrogazione 2
 Determinare il nome degli invitati che hanno partecipato alla festa pi`u costosa.
+
+SELECT nome_invitato
+FROM REGALO
+WHERE CodiceFesta IN (
+    SELECT Codice
+    FROM FESTA
+    WHERE Costo >= ALL (
+          SELECT Costo
+          FROM FESTA
+  )
+)
+
+
 Interrogazione 3
 Determinare il codice delle feste dove almeno un invitato ha portato tre regali.
 
+SELECT CodiceFesta,
+       nome_invitato,
+       COUNT (regalo) AS numero_regali
+FROM REGALO
+GROUP BY nome_invitato 
+HAVING numero_regali >= 3
+
 2.2.3 Autobus
 Sia dato lo schema relazionale:
-AUTISTA(CF, Nome, Cognome, Et`a, NumAutobus)
+AUTISTA(CF, Nome, Cognome, Età, NumAutobus)
 PERCORRE(NumAutobus, NomeStrada)
 STRADA(NomeStrada, Lunghezza, Pedonale)
 Si noti che: Pedonale `e un attributo booleano che vale true se la strada `e di tipo pedonale;
@@ -31,10 +64,22 @@ Interrogazione 2
 Determinare gli autobus (NumAutobus) che percorrono tutte le strade pedonali,
 ed eventualmente anche altre strade.
 
+
+
 Interrogazione 3
 Conteggiare gli autobus che percorrono solo strade pedonali (non devono
 necessariamente percorrerle tutte).
 
+SELECT NumAutobus
+FROM PERCORRE
+WHERE NOT EXISTS (
+  SELECT *
+  FROM STRADA
+  WHERE Pedonale = FALSE
+) 
+
+
+  
 2.3.4 Donut
 Sia dato lo schema relazionale:
 DONUT(Codice, Nome, Crema, Glassa, Decorazione, DataPrimaProduzione)
@@ -43,6 +88,27 @@ ACQUISTO(CFCliente, CodiceDonut, DataAcquisto)
 
 1. Determinare il codice dei donut con glassa al ‘cioccolato’ che sono stati prodotti per
 la prima volta nel 1999 e che sono stati acquistati da pi`u di 2000 diversi clienti.
+
+SELECT Codice
+FROM DONUT
+WHERE Glassa = "cioccolato" AND 
+      DataPrimaProduzione = "1999" AND 
+      Codice IN (
+        SELECT CodiceDonut
+        FROM ACQUISTO
+        WHERE COUNT(CFCliente) > 2000
+      )
+  
+/*OPPPURE*/
+
+SELECT Codice
+FROM DONUT
+JOIN ACQUISTO ON ACQUISTO.CodiceDonut = DONUT.Codice
+WHERE Glassa = "cioccolato" AND 
+      DataPrimaProduzione = "1999" AND 
+GROUP BY Codice
+HAVING COUNT(CFCliente) > 2000
+  
 2. Determinare il nome e cognome dei clienti che hanno acquistato donut farciti di crema
 ‘pasticciera’ e decorati con ‘zucchero a granelli’ ma che non hanno mai acquistato
 donut con glassa al ‘cioccolato’.
