@@ -78,7 +78,6 @@ WHERE NOT EXISTS (
   WHERE Pedonale = FALSE
 ) 
 
-
   
 2.3.4 Donut
 Sia dato lo schema relazionale:
@@ -105,16 +104,41 @@ SELECT Codice
 FROM DONUT
 JOIN ACQUISTO ON ACQUISTO.CodiceDonut = DONUT.Codice
 WHERE Glassa = "cioccolato" AND 
-      DataPrimaProduzione = "1999" AND 
+      DataPrimaProduzione = "1999" 
 GROUP BY Codice
 HAVING COUNT(CFCliente) > 2000
   
 2. Determinare il nome e cognome dei clienti che hanno acquistato donut farciti di crema
 ‘pasticciera’ e decorati con ‘zucchero a granelli’ ma che non hanno mai acquistato
 donut con glassa al ‘cioccolato’.
+
+SELECT nome,
+       cognome
+FROM CLIENTE
+INNER JOIN ACQUISTO ON CLIENTE.CF = ACQUISTO.CFCliente
+WHERE CodiceDonut IN (
+       SELECT Codice 
+       FROM DONUT
+       WHERE Crema = 'pasticciera' AND
+             Decorazione = ‘zucchero a granelli’ AND
+             Codice NOT IN (
+                SELECT Codice
+                FROM DONUT
+                WHERE Crema = ‘cioccolato’
+            ) 
+)
+       
 3. Determinare il nome, cognome e il codice fiscale dei clienti che hanno acquistato almeno
 tre differenti tipi di Donut.
 
+SELECT nome,
+       cognome,
+       CF
+FROM CLIENTE
+JOIN ACQUISTO ON CLIENTE.CF = ACQUISTO.CFCliente
+GROUP BY CF
+HAVING COUNT (DISTINCT CodiceDonut) >= 3
+       
 2.3.7 Rimborso
 Sia dato lo schema relazionale:
 FONDO(Codice, Importo, DataInizioErogazione, Scadenza, MatrAmministratore)
@@ -123,6 +147,18 @@ PARTECIPA(MatrDipendente, CodiceFondo)
 
 1. Determinare il nome e cognome dei dipendenti che non sono amministratori di fondi
 erogati a partire dal 2003.
+
+SELECT nome,
+       cognome
+FROM DIPENDENTE
+JOIN PARTECIPA ON DIPENDENTE.Matricola = PARTECIPA.MatrDipendente
+WHERE Posizione != "Amministratore"
+       CodiceFondo NOT IN (
+       SELECT Codice
+       FROM FONDO
+       WHERE DataInizioErogazione > 2023
+)
+
 2. Determinare i fondi (si richiede di restituire il codice del fondo e la scadenza) per i
 quali tutti i partecipanti sono anche amministratori di fondi.
 3. Determinare il nome e il cognome degli amministratori del fondo pi`u vecchio (cio`e,
